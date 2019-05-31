@@ -14,7 +14,6 @@ func Loop(fn func() interface{}, efn func(err error)) (v interface{}) {
 				log.Fatalln(_err.(*_KErr).StackTrace())
 			}
 		}
-		return
 	}
 }
 
