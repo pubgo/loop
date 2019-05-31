@@ -13,6 +13,7 @@ func Loop(fn func() interface{}, efn func(err error)) (v interface{}) {
 			if _err := _KTry(efn, err); _err != nil {
 				log.Fatalln(_err.(*_KErr).StackTrace())
 			}
+			return
 		}
 	}
 }
