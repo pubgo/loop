@@ -8,7 +8,9 @@ import (
 func Loop(fn func() interface{}, efn func(err error)) (v interface{}) {
 	for {
 		if err := _KTry(func() {
-			v = fn()
+			if v = fn(); v == nil {
+				panic("loop value is nil")
+			}
 		}); err != nil {
 			if _err := _KTry(efn, err); _err != nil {
 				log.Fatalln(_err.(*_KErr).StackTrace())
