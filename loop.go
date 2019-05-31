@@ -1,48 +1,20 @@
 package loop
 
 import (
+	"log"
 	"time"
 )
 
-func Loop(fn func(i int)) error {
-	for i := 0; ; i++ {
-		if err := _KTry(fn, i); err != nil {
-			return err
-		}
-	}
-}
-
-func Range(args ...int) func(fn func(i int)) error {
-	return func(fn func(i int)) error {
-		if len(args) == 0 {
-			return Loop(fn)
-		}
-
-		if len(args) == 1 {
-			for i := 0; i < args[0]; i++ {
-				if err := _KTry(fn, i); err != nil {
-					return err
-				}
+func Loop(fn func() interface{}, efn func(err error)) (v interface{}) {
+	for {
+		if err := _KTry(func() {
+			v = fn()
+		}); err != nil {
+			if _err := _KTry(efn, err); _err != nil {
+				log.Fatalln(_err.(*_KErr).StackTrace())
 			}
 		}
-
-		if len(args) == 2 {
-			for i := args[0]; i < args[1]; i++ {
-				if err := _KTry(fn, i); err != nil {
-					return err
-				}
-			}
-		}
-
-		if len(args) == 3 {
-			for i := args[0]; i < args[1]; i += args[2] {
-				if err := _KTry(fn, i); err != nil {
-					return err
-				}
-			}
-		}
-
-		return nil
+		return
 	}
 }
 
@@ -64,7 +36,7 @@ func Wait(fn func(dur time.Duration) bool) error {
 	return nil
 }
 
-func Ticker(fn func(dur time.Time) uint) error{
+func Ticker(fn func(dur time.Time) uint) error {
 	var _dur uint = 0
 	for i := 0; ; i++ {
 		if err := _KTry(func() {
