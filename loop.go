@@ -1,59 +1,52 @@
 package loop
 
 import (
-	"log"
+	"github.com/pubgo/errors"
 	"time"
 )
 
-func Loop(fn func() interface{}, efn func(err error)) (v interface{}) {
-	for {
-		if err := _KTry(func() {
-			v = fn()
-		}); err != nil {
-			if _err := _KTry(efn, err); _err != nil {
-				log.Fatalln(_err.(*_KErr).StackTrace())
-			}
-			continue
-		}
-		return
-	}
-}
+func Wait(fn func(dur time.Duration) bool) {
+	defer errors.Handle(func() {})
 
-func Wait(fn func(dur time.Duration) bool) error {
 	var _b = true
 	for i := 0; _b; i++ {
-		if err := _KTry(func() {
+		errors.ErrHandle(errors.Try(func() {
 			_b = fn(time.Second * time.Duration(i))
-		}); err != nil {
-			return err
-		}
+		}), func(err *errors.Err) {
+			if Cfg.Debug {
+				err.P()
+			}
+		})
 
 		if !_b {
-			return nil
+			return
 		}
 
 		time.Sleep(time.Second)
 	}
-	return nil
 }
 
-func Ticker(fn func(dur time.Time) uint) error {
-	var _dur uint = 0
+func Ticker(fn func(dur time.Time) time.Duration) {
+	defer errors.Handle(func() {})
+
+	var _dur = time.Duration(0)
 	for i := 0; ; i++ {
-		if err := _KTry(func() {
+		errors.ErrHandle(errors.Try(func() {
 			_dur = fn(time.Now())
-		}).(*_KErr); err != nil {
-			return err
-		}
+		}), func(err *errors.Err) {
+			if Cfg.Debug {
+				err.P()
+			}
+		})
 
 		if _dur < 0 {
-			return nil
+			return
 		}
 
 		if _dur == 0 {
-			_dur = 1
+			_dur = time.Second
 		}
 
-		time.Sleep(time.Duration(_dur))
+		time.Sleep(_dur)
 	}
 }
